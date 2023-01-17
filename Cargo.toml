@@ -1,0 +1,13 @@
+[package]
+name = "cardano_offchain"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+blockfrost = "0.2.0"
+cardano-serialization-lib = "11.2.1"
+hex = "0.4.3"
+minicbor = "0.18.0"
+tokio = {version= "1.24.1", features=["full"]}
