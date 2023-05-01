@@ -54,13 +54,13 @@ async fn get_utxo_from_script() {
     // OUTPUT
     let mut outputs = TransactionOutputs::new();
     let output_builder = TransactionOutputBuilder::new().with_address(&payer_address);
-    let script_output = output_builder
+    let payer_output = output_builder
         .next()
         .unwrap()
         .with_coin(&to_bignum(2_000_000))
         .build()
         .unwrap();
-    outputs.add(&script_output);
+    outputs.add(&payer_output);
 
     let mut tx_body = TransactionBody::new_tx_body(&inputs, &outputs, &fee);
 
@@ -68,19 +68,24 @@ async fn get_utxo_from_script() {
     tx_body.set_collateral(&collateral_inputs);
 
     // SCRIPT
+    // from aiken payment_script.json
+    //let cbor_hex = "58bb58b90100002225333573464646464a666ae6800840045281919198009bac330043005330043005006480012010375c66008600a01090001800800911192999aab9f00114a026464a666ae68cdc78010020a511333006006001004357440046eb8d5d080080119b97323001375c66004600600a900011b9900149010d48656c6c6f2c20576f726c64210022323330010014800000c888cccd5cd19b870040025742466600800866e0000d20023574400200246aae78dd50008a4c2d";
     // from aiken script.cbor
     let cbor_hex = "58b90100002225333573464646464a666ae6800840045281919198009bac330043005330043005006480012010375c66008600a01090001800800911192999aab9f00114a026464a666ae68cdc78010020a511333006006001004357440046eb8d5d080080119b97323001375c66004600600a900011b9900149010d48656c6c6f2c20576f726c64210022323330010014800000c888cccd5cd19b870040025742466600800866e0000d20023574400200246aae78dd50008a4c2d";
     let cbor = hex::decode(cbor_hex).unwrap();
 
     let mut plutus_scripts = PlutusScripts::new();
     let plutus_script = PlutusScript::new_v2(cbor);
+
+    let script_hash = plutus_script.hash();
+    println!("script_hash: {}", script_hash);
     plutus_scripts.add(&plutus_script);
 
     let mut witness_set = TransactionWitnessSet::new();
     witness_set.set_plutus_scripts(&plutus_scripts);
 
     // REDEEMER
-    let hello_world = hex::encode("Hello, World!").as_bytes().to_vec(); //"Hello, World!".as_bytes().to_vec();
+    let hello_world = "Hello, World!".as_bytes().to_vec(); //hex::encode("Hello, World!").as_bytes().to_vec(); //
     let hello_world_plutus_data = PlutusData::new_bytes(hello_world);
     let mut plutus_list = PlutusList::new();
     plutus_list.add(&hello_world_plutus_data);
@@ -92,16 +97,12 @@ async fn get_utxo_from_script() {
     let redeemer = Redeemer::new(
         &RedeemerTag::new_spend(),
         &BigNum::zero(),
-        &constr_plutus_data,
+        &constr_plutus_data, //constr_plutus_data
         &ExUnits::new(&mem, &steps),
     );
     let mut redeemers = Redeemers::new();
     redeemers.add(&redeemer);
     witness_set.set_redeemers(&redeemers);
-
-    //experimantation
-    //ScriptWitnessType
-    //let test = TransactionBuilder::new(cfg);
 
     // SCRIPT_HASH
     let mut cost_models = Costmdls::new();
@@ -110,7 +111,7 @@ async fn get_utxo_from_script() {
         .get(&language)
         .unwrap();
     cost_models.insert(&language, &cost_model);
-    let script_data_hash = hash_script_data(&redeemers, &cost_models, None); //Some(plutus_list)); //Some(plutus_data)
+    let script_data_hash = hash_script_data(&redeemers, &cost_models, None); //Some(plutus_list)); //Some(plutus_data) //None
     tx_body.set_script_data_hash(&script_data_hash);
 
     // ADD REQUIRED SIGNER
