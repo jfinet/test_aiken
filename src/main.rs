@@ -1,3 +1,5 @@
+use std::env;
+
 use blockfrost::{BlockFrostApi, BlockFrostSettings};
 use cardano_serialization_lib::{
     address::Address,
@@ -14,7 +16,7 @@ use cardano_serialization_lib::{
     TransactionOutputs, TransactionWitnessSet,
 };
 use hex::encode;
-use minicbor::{Decoder, Encoder, Encode};
+use minicbor::{Decoder, Encode, Encoder};
 
 #[tokio::main]
 async fn main() {
@@ -197,7 +199,8 @@ async fn send_utxo_to_script() {
 }
 
 pub fn prepare_blockfrost_testnet_api() -> BlockFrostApi {
-    let blockfrost_project_id = "preprodcd7lIdgNxfOMKa61b2RddfvaSV3eQoWe"; //todo how to get env variable aws lambda?
+    let blockfrost_project_id = env::var("BLOCKFROST_PROJECT_ID")
+        .unwrap_or("preprodcd7lIdgNxfOMKa61b2RddfvaSV3eQoWe".to_string());
     let mut cardano_network = BlockFrostSettings::new().use_testnet(); //todo check if need another lambda for different env
     cardano_network.network_address = "https://cardano-preprod.blockfrost.io/api/v0".to_string();
     BlockFrostApi::new(blockfrost_project_id, cardano_network)
